@@ -5,6 +5,18 @@ You only do this once. End result: `credentials.json` and `token.json` in this f
 
 ---
 
+## If someone gave you a `credentials.json`
+
+Skip sections 1-4. You don't need your own GCP project.
+
+1. Drop the `credentials.json` you were given into this folder (`original_nb_data/sync/`).
+2. Make sure you've been added to the shared drive (or that the files are shared with your Google account) - the script can only download files you can already open in Drive.
+3. Jump to **section 5** below and run it. You'll sign in with your own Google account; your own `token.json` gets cached locally and the original owner's auth is unaffected.
+
+You may see a "Google hasn't verified this app" warning on the consent screen - click **Advanced** -> **Go to (unsafe)** -> **Continue**. Expected, since the app is unverified.
+
+---
+
 ## 1. Create a Google Cloud project
 
 1. Go to <https://console.cloud.google.com/>
@@ -41,7 +53,7 @@ You only do this once. End result: `credentials.json` and `token.json` in this f
 3. Application type: **Desktop app**. Name: anything.
 4. **Create** -> a dialog appears -> **Download JSON**.
 5. Rename the downloaded file to **`credentials.json`** and move it into this
-   folder (`original_files/sync/`).
+   folder (`original_nb_data/sync/`).
 
 ## 5. First run
 
