@@ -1,9 +1,10 @@
-# GDrive sync secrets - DO NOT COMMIT
+# secrets - DO NOT COMMIT
 original_nb_data/sync/credentials.json
 original_nb_data/sync/token.json
+*.env
 
 # venv
-original_nb_data/sync/.venv/
+*.venv
 
 # trash and cache lol
 *:Zone.Identifier
