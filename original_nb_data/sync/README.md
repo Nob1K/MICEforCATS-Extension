@@ -1,4 +1,5 @@
 **If using for the first time, follow documentation in SETUP.md**
+**For collaborators sharing the same GDrive**
 
 #### update.sh
 
