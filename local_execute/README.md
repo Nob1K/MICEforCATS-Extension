@@ -33,17 +33,39 @@ adapts the notebooks originally designed to run on Google Colab. Uses a Python v
          reads results_summary.csv + judge_responses.json
          writes ../original_nb_data/MICE_Output/results_summary_judged.csv
          prints coverage + accuracy
+
+ finalize_results.sh            (CPU; seconds)
+      |
+      v  papermill finalize_results.ipynb -> output_finalize.ipynb
+         reads results_summary_judged.csv + results_layers.csv
+         writes ../original_nb_data/MICE_Output/<BUNDLE_DIR>/
+                  summary_full.csv, layers_full.csv, data_bundle.joblib
+         (default BUNDLE_DIR = "my-eval"; eval-1k is reserved for the
+          precomputed bundle and is never overwritten)
+
+  -----  the finalize_results step above is OPTIONAL — skip it if you're
+         using our precomputed eval-1k bundle (the default for run_eval).  -----
+
+ run_eval.sh                    (CPU-only; seconds-to-minutes)
+      |
+      v  papermill MICE-Evals.ipynb -> output_eval.ipynb
+         reads ../original_nb_data/MICE_Output/<BUNDLE_DIR>/
+                 layers_full.csv, summary_full.csv, data_bundle.joblib
+         (default BUNDLE_DIR = "eval-1k" — our precomputed bundle.
+          override with -p BUNDLE_DIR my-eval to use your own.)
+         trains LR + RF, runs smECE / AUC / utility / MBR analyses
+         renders all plots inline in output_eval.ipynb
 ```
 
 ---
 
 ## Prerequisites
 
-- Linux
+- Linux for steps 1–3 (CUDA GPU required for Llama 3 inference). Step 4 (eval) runs on CPU and works fine on macOS or any laptop.
 - Python 3.10+
 - A GPU with enough VRAM to load `meta-llama/Meta-Llama-3-8B-Instruct` in fp16 (~16 GB). CPU works in theory but a full run is very slow.
 - A Hugging Face account that has accepted the Meta Llama 3 license, and an HF access token.
-- The dataset CSV at `../original_nb_data/Data/dataset_Brandon.csv`.
+- The dataset CSV at `../original_nb_data/Data`.
 
 ### `.env`
 
@@ -84,7 +106,7 @@ Re-running `build_env.sh` is safe — venv creation is skipped if it exists, and
 
 ## Running the pipeline
 
-**It is recomended that you use our already extracted features, as running feature extraction is very compute heavy and will take a lot of time. You can find our extracted feature in ../original_nb_data/MICE_Output/eval-1k. Use the data in that folder to train logistic regression and random forest, which will be in step 4 (skip 1-3).**
+**It is recommended that you use our already extracted features, as running feature extraction is very compute heavy and will take a lot of time. You can find our extracted feature in ../original_nb_data/MICE_Output/eval-1k. Use the data in that folder to train logistic regression and random forest, which will be in step 4 (skip 1-3).**
 
 ### 1. Feature extraction
 
@@ -96,9 +118,11 @@ Activates the venv, runs the main notebook through papermill, writes the execute
 
 - `results_summary.csv` — one row per question (final text, log-confidence, etc.)
 - `results_layers.csv` — one row per (question, layer) with BERTScore P/R/F1
-- `Brandon_featextract_lite_checkpoint.pkl` — periodic checkpoint, used to resume after interruption
+- `featextract_checkpoint.pkl` — periodic checkpoint, used to resume after interruption
 
 The plot from cell 13 is embedded in `output_feat_extract.ipynb` — open it in any notebook viewer to see the layer-wise F1 curves.
+
+This notebook uses `../original_nb_data/Data/dataset_Brandon.csv` as an input, this can be changed in the notebook.
 
 ### 2. Manual LLM-judge step
 
@@ -145,9 +169,36 @@ Coverage and accuracy print to the executed notebook (`output_judge.ipynb`).
 
 ### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline
 
+```bash
+./run_eval.sh
+```
+
+By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-1k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
+
+Graphs and outputs can be viewed at the output notebook saved to `output_eval.ipynb`.
+
+#### Running eval on your own data
+
+If you ran steps 1–3 yourself and want to evaluate on those outputs instead of the precomputed bundle, first turn your `results_summary_judged.csv` + `results_layers.csv` into a bundle:
+
+```bash
+./finalize_results.sh
+```
+
+This writes `summary_full.csv`, `layers_full.csv`, and `data_bundle.joblib` into `../original_nb_data/MICE_Output/my-eval/` (60/20/20 stratified split, `random_state=42` — same recipe as `eval-1k`). It does **not** touch `eval-1k/`.
+
+Then point `run_eval` at your bundle by overriding the `BUNDLE_DIR` parameter:
+
+```bash
+source .venv/bin/activate
+papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
+```
+
+`run_eval.sh` continues to default to `eval-1k`, so anyone using the precomputed path is unaffected.
+
 ---
 
-## Test runs (subset of samples)
+## Test runs for feature extraction (subset of samples)
 
 Don't hand-edit the notebook to slice the dataset. Use papermill parameters instead — the main notebook has a tagged `parameters` cell with `LIMIT = None` that you override at the command line:
 
@@ -161,10 +212,10 @@ papermill MICE-Replica_feat_extract.ipynb output_test.ipynb \
 
 This runs the full pipeline on the first 5 rows of `dataset_Brandon.csv`. The default (`LIMIT = None`) means no slicing, so `run_feat_extract.sh` continues to do a full run unchanged.
 
-**Important:** if a previous full or partial run has written `Brandon_featextract_lite_checkpoint.pkl` into the output directory, the test run will resume from that checkpoint instead of starting fresh. Delete it first for a clean test:
+**Important:** if a previous full or partial run has written `featextract_checkpoint.pkl` into the output directory, the test run will resume from that checkpoint instead of starting fresh. Delete it first for a clean test:
 
 ```bash
-rm -f ../original_nb_data/MICE_Output/Brandon_featextract_lite_checkpoint.pkl
+rm -f ../original_nb_data/MICE_Output/featextract_checkpoint.pkl
 ```
 
 ---
@@ -181,8 +232,13 @@ rm -f ../original_nb_data/MICE_Output/Brandon_featextract_lite_checkpoint.pkl
 | `run_judge.ipynb` | Applies LLM-judge predictions to the summary CSV. Reads `judge_responses.json`. |
 | `run_judge.sh` | Runs `run_judge.ipynb` via papermill. Output: `output_judge.ipynb`. |
 | `judge_responses.json` | (You create this.) Concatenated JSON output from the external LLM judge. Flat array or list-of-batches both work. |
-| `output_feat_extract.ipynb` | Generated by papermill. Contains executed cells, printed batch prompts (cell 14), and the embedded layer-F1 plot. |
+| `MICE-Evals.ipynb` | Trains LR + RF on a featurized bundle, runs smECE / AUC / utility / MBR evaluation, plots results. CPU-only; no GPU or LLM required. Has a `parameters`-tagged cell exposing `BUNDLE_DIR` (default `"eval-1k"`). |
+| `run_eval.sh` | Runs `MICE-Evals.ipynb` via papermill against the default `BUNDLE_DIR=eval-1k`. Output: `output_eval.ipynb`. |
+| `finalize_results.ipynb` | Optional bridge: turns `results_summary_judged.csv` + `results_layers.csv` (from your local feat-extract + judge run) into the eval-canonical bundle (`summary_full.csv`, `layers_full.csv`, `data_bundle.joblib`). Has a `parameters`-tagged cell exposing `BUNDLE_DIR` (default `"my-eval"`). |
+| `finalize_results.sh` | Runs `finalize_results.ipynb` via papermill. Output: `output_finalize.ipynb`. |
+| `output_feat_extract.ipynb` | Generated by papermill. Contains executed cells, printed batch prompts, and the embedded layer-F1 plot. |
 | `output_judge.ipynb` | Generated by papermill. Contains coverage + accuracy printout. |
+| `output_eval.ipynb` | Generated by papermill. Contains LR/RF classification reports, smECE/AUC tables, and all evaluation plots. |
 
 Outputs that land **outside** this folder (in `../original_nb_data/MICE_Output/`):
 
@@ -190,7 +246,7 @@ Outputs that land **outside** this folder (in `../original_nb_data/MICE_Output/`
 |---|---|---|
 | `results_summary.csv` | feat-extract cell 12 | One row per question. |
 | `results_layers.csv` | feat-extract cell 12 | One row per (question, layer). |
-| `Brandon_featextract_lite_checkpoint.pkl` | feat-extract cell 10 | Resume state. Delete to force a clean run. |
+| `featextract_checkpoint.pkl` | feat-extract cell 10 | Resume state. Delete to force a clean run. |
 | `results_summary_judged.csv` | run_judge | Summary + `predicted_type` + `judge_decision`. |
 
 ---
@@ -205,7 +261,9 @@ jupyter kernelspec list   # must be run with the venv activated
 You should see `mice-venv`. If not, re-run `./build_env.sh`. Make sure both run scripts pass `-k mice-venv`.
 
 **`Command 'jupyter' not found`.**
-You're outside the venv. Either `source .venv/bin/activate` first, or just inspect `~/.local/share/jupyter/kernels/mice-venv/kernel.json` directly — no `jupyter` CLI required.
+You're outside the venv. Either `source .venv/bin/activate` first, or inspect the kernelspec on disk directly — no `jupyter` CLI required. The path differs by platform:
+- Linux: `~/.local/share/jupyter/kernels/mice-venv/kernel.json`
+- macOS: `~/Library/Jupyter/kernels/mice-venv/kernel.json`
 
 **`KeyError: 'HF_TOKEN'` or 401 on model download.**
 `.env` not being found. The run scripts `cd "$(dirname "$0")"` first, so `load_dotenv()` looks for `local_execute/.env`. Confirm the file exists there and has no quotes around the token value.
@@ -217,18 +275,7 @@ Your HF account hasn't accepted the Llama 3 license yet. Visit the model page on
 Either lower `MAX_NEW_TOKENS` in cell 3, or lower the `CHUNK_SIZE = 256` for BERTScore in cell 10, or run with a smaller model.
 
 **Test run starts at sample N instead of 0.**
-Stale `Brandon_featextract_lite_checkpoint.pkl`. Remove it (see Test runs section above).
+Stale `featextract_checkpoint.pkl`. Remove it (see Test runs section above).
 
 **Notebook hangs forever during the judge step.**
 Make sure you're running `run_judge.sh` and not the old interactive cell. The current pipeline reads from `judge_responses.json`, never from stdin.
-
----
-
-## What changed from the original Colab notebook
-
-- `from google.colab import userdata` removed; HF token now comes from `.env` via `python-dotenv`.
-- `from google.colab import drive` / `drive.mount(...)` removed; paths are local filesystem paths anchored at `Path.cwd().parent`.
-- `__file__`-based path resolution replaced with `Path.cwd().parent` (papermill cwd is `local_execute/`).
-- Inline `!pip install` cells removed in favor of `requirements.txt`.
-- Interactive `input()`-based judge cell extracted into a separate notebook (`run_judge.ipynb`) that reads from a JSON file.
-- A `parameters`-tagged cell with `LIMIT = None` was added so test runs are a CLI override rather than a code edit.

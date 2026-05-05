@@ -10,7 +10,7 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/pull_all.py" "$@"
 
 cd "$REPO_ROOT"
-git add original_files
+git add original_nb_data
 
 if git diff --cached --quiet; then
     echo "No changes to commit."
