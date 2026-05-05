@@ -1,6 +1,6 @@
-# local_execute
+# Local Execution pipeline
 
-adapts the notebooks originally designed to run on Google Colab. Uses a Python venv + [papermill](https://papermill.readthedocs.io/) to run notebooks from the shell.
+Implementation in this folder adapts the notebooks originally designed to run on Google Colab (see more in original_nb_data). Uses a Python venv + [papermill](https://papermill.readthedocs.io/) to run notebooks from the shell.
 
 ---
 
@@ -20,7 +20,7 @@ adapts the notebooks originally designed to run on Google Colab. Uses a Python v
            ../original_nb_data/MICE_Output/results_layers.csv
          output notebook contains the layer-wise BERTScore plot inline
       |
-      v  cell 14 of the output notebook prints batched LLM-judge prompts
+      v  the cell under "Judge Sample Questions" prints batched LLM-judge prompts
       |
  (manual)  copy printed prompts into an external LLM (Claude, GPT, etc.),
            collect the JSON arrays it returns, save concatenated as
@@ -65,7 +65,7 @@ adapts the notebooks originally designed to run on Google Colab. Uses a Python v
 - Python 3.10+
 - A GPU with enough VRAM to load `meta-llama/Meta-Llama-3-8B-Instruct` in fp16 (~16 GB). CPU works in theory but a full run is very slow. (for steps 1 - 3)
 - A Hugging Face account that has accepted the Meta Llama 3 license, and an HF access token.
-- The dataset CSV at `../original_nb_data/Data`.
+- The dataset CSVs at `../original_nb_data/Data`.
 
 ### `.env`
 
@@ -185,7 +185,7 @@ papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
 
 `run_eval.sh` continues to default to `eval-1k`, so anyone using the precomputed path is unaffected.
 
-### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline
+### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline (start at this step if you just want to see results and not extract your own features as training data)
 
 ```bash
 ./run_eval.sh

@@ -5,7 +5,7 @@ This is an extension project from the paper [MICE for CATs: Model-Internal Confi
 
 1. original notebooks - In original_nb_data, we have the notebooks that we developed and ran using Google Colab. You are welcome to copy these notebooks and data to your own drive and use Colab's runtime to replicate our workshlow.
 
-2. local execution - If you have sufficient computing resources, we've made some changes to our original notebooks and added some scripts so that you can run them on your machine.
+2. local execution - We've made some changes to our original notebooks and added some scripts to automate the process. You have the option to run the training and evaluation part only, which is less demanding on compute resources.
 
 **More information can be found in the respective README files in each approach**
 
