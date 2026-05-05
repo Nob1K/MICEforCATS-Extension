@@ -43,7 +43,7 @@ adapts the notebooks originally designed to run on Google Colab. Uses a Python v
          (default BUNDLE_DIR = "my-eval"; eval-1k is reserved for the
           precomputed bundle and is never overwritten)
 
-  -----  the finalize_results step above is OPTIONAL — skip it if you're
+  -----  the steps above are OPTIONAL — skip it if you're
          using our precomputed eval-1k bundle (the default for run_eval).  -----
 
  run_eval.sh                    (CPU-only; seconds-to-minutes)
@@ -63,7 +63,7 @@ adapts the notebooks originally designed to run on Google Colab. Uses a Python v
 
 - Linux for steps 1–3 (CUDA GPU required for Llama 3 inference). Step 4 (eval) runs on CPU and works fine on macOS or any laptop.
 - Python 3.10+
-- A GPU with enough VRAM to load `meta-llama/Meta-Llama-3-8B-Instruct` in fp16 (~16 GB). CPU works in theory but a full run is very slow.
+- A GPU with enough VRAM to load `meta-llama/Meta-Llama-3-8B-Instruct` in fp16 (~16 GB). CPU works in theory but a full run is very slow. (for steps 1 - 3)
 - A Hugging Face account that has accepted the Meta Llama 3 license, and an HF access token.
 - The dataset CSV at `../original_nb_data/Data`.
 
@@ -166,17 +166,6 @@ Reads `results_summary.csv` and `judge_responses.json`, joins them on `question_
 
 Coverage and accuracy print to the executed notebook (`output_judge.ipynb`).
 
-
-### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline
-
-```bash
-./run_eval.sh
-```
-
-By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-1k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
-
-Graphs and outputs can be viewed at the output notebook saved to `output_eval.ipynb`.
-
 #### Running eval on your own data
 
 If you ran steps 1–3 yourself and want to evaluate on those outputs instead of the precomputed bundle, first turn your `results_summary_judged.csv` + `results_layers.csv` into a bundle:
@@ -196,11 +185,22 @@ papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
 
 `run_eval.sh` continues to default to `eval-1k`, so anyone using the precomputed path is unaffected.
 
+### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline
+
+```bash
+./run_eval.sh
+```
+
+By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-1k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
+
+Graphs and outputs can be viewed at the output notebook saved to `output_eval.ipynb`.
+
+
 ---
 
 ## Test runs for feature extraction (subset of samples)
 
-Don't hand-edit the notebook to slice the dataset. Use papermill parameters instead — the main notebook has a tagged `parameters` cell with `LIMIT = None` that you override at the command line:
+Don't hand-edit the notebook to slice the dataset. Use papermill parameters instead - the main notebook has a tagged `parameters` cell with `LIMIT = None` that you override at the command line:
 
 ```bash
 cd local_execute
