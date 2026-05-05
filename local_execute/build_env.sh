@@ -17,4 +17,4 @@ pip install --upgrade pip
 pip install -r "$REQUIREMENTS"
 
 echo "Registering ipython kernel..."
-python -m ipykernel install --user --name mice-venv --display-name "MICE venv"
+python3 -m ipykernel install --user --name mice-venv --display-name "MICE venv"
