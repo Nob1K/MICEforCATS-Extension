@@ -108,6 +108,11 @@ Re-running `build_env.sh` is safe - venv creation is skipped if it exists, and `
 
 **It is recommended that you use our already extracted features, as running feature extraction is very compute heavy and will take a lot of time. You can find our extracted feature in ../original_nb_data/MICE_Output/eval-2.5k. Use the data in that folder to train logistic regression and random forest, which will be in step 4 (skip 1-3).**
 
+**Run this command if your scripts are not executing due to permission issues**
+```bash 
+chmod +x *.sh
+```
+
 ### 1. Feature extraction
 
 ```bash
