@@ -92,10 +92,15 @@ What it does:
 2. Installs everything in `requirements.txt`.
 3. Registers a Jupyter kernel called `mice-venv` pointing at `.venv/bin/python`. The run scripts pass `-k mice-venv` to papermill, which is what makes notebook cells execute against this venv (and not your system Python).
 
-Verify registration:
+Verify registration (Linux):
 
 ```bash
 ls ~/.local/share/jupyter/kernels/mice-venv/
+```
+
+For MacOS:
+```bash
+ls ~/Library/Jupyter/kernels/mice-venv/
 ```
 
 You should see a `kernel.json` whose `argv[0]` ends in `local_execute/.venv/bin/python`.
