@@ -12,7 +12,7 @@ Implementation in this folder adapts the notebooks originally designed to run on
       v  creates .venv, installs deps, registers `mice-venv` Jupyter kernel
       |
       |
- run_feat_extract.sh            (heavy — will take many hours on GPU)
+ run_feat_extract.sh            (heavy - will take many hours on GPU)
       |
       v  papermill MICE-Replica_feat_extract.ipynb -> output_feat_extract.ipynb
          writes:
@@ -43,7 +43,7 @@ Implementation in this folder adapts the notebooks originally designed to run on
          (default BUNDLE_DIR = "my-eval"; eval-1k is reserved for the
           precomputed bundle and is never overwritten)
 
-  -----  the steps above are OPTIONAL — skip it if you're
+  -----  the steps above are OPTIONAL - skip it if you're
          using our precomputed eval-1k bundle (the default for run_eval).  -----
 
  run_eval.sh                    (CPU-only; seconds-to-minutes)
@@ -51,7 +51,7 @@ Implementation in this folder adapts the notebooks originally designed to run on
       v  papermill MICE-Evals.ipynb -> output_eval.ipynb
          reads ../original_nb_data/MICE_Output/<BUNDLE_DIR>/
                  layers_full.csv, summary_full.csv, data_bundle.joblib
-         (default BUNDLE_DIR = "eval-1k" — our precomputed bundle.
+         (default BUNDLE_DIR = "eval-1k" - our precomputed bundle.
           override with -p BUNDLE_DIR my-eval to use your own.)
          trains LR + RF, runs smECE / AUC / utility / MBR analyses
          renders all plots inline in output_eval.ipynb
@@ -75,7 +75,7 @@ Create `local_execute/.env`:
 HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-The notebook reads this via `python-dotenv` when its working directory is `local_execute/` — which is what the run scripts arrange.
+The notebook reads this via `python-dotenv` when its working directory is `local_execute/` - which is what the run scripts arrange.
 
 ---
 
@@ -100,7 +100,7 @@ ls ~/.local/share/jupyter/kernels/mice-venv/
 
 You should see a `kernel.json` whose `argv[0]` ends in `local_execute/.venv/bin/python`.
 
-Re-running `build_env.sh` is safe — venv creation is skipped if it exists, and `ipykernel install` is idempotent.
+Re-running `build_env.sh` is safe - venv creation is skipped if it exists, and `ipykernel install` is idempotent.
 
 ---
 
@@ -116,11 +116,11 @@ Re-running `build_env.sh` is safe — venv creation is skipped if it exists, and
 
 Activates the venv, runs the main notebook through papermill, writes the executed copy to `output_feat_extract.ipynb`. Outputs land in `../original_nb_data/MICE_Output/`:
 
-- `results_summary.csv` — one row per question (final text, log-confidence, etc.)
-- `results_layers.csv` — one row per (question, layer) with BERTScore P/R/F1
-- `featextract_checkpoint.pkl` — periodic checkpoint, used to resume after interruption
+- `results_summary.csv` - one row per question (final text, log-confidence, etc.)
+- `results_layers.csv` - one row per (question, layer) with BERTScore P/R/F1
+- `featextract_checkpoint.pkl` - periodic checkpoint, used to resume after interruption
 
-The plot from cell 13 is embedded in `output_feat_extract.ipynb` — open it in any notebook viewer to see the layer-wise F1 curves.
+The plot from cell 13 is embedded in `output_feat_extract.ipynb` - open it in any notebook viewer to see the layer-wise F1 curves.
 
 This notebook uses `../original_nb_data/Data/dataset_Brandon.csv` as an input, this can be changed in the notebook.
 
@@ -174,7 +174,7 @@ If you ran steps 1–3 yourself and want to evaluate on those outputs instead of
 ./finalize_results.sh
 ```
 
-This writes `summary_full.csv`, `layers_full.csv`, and `data_bundle.joblib` into `../original_nb_data/MICE_Output/my-eval/` (60/20/20 stratified split, `random_state=42` — same recipe as `eval-1k`). It does **not** touch `eval-1k/`.
+This writes `summary_full.csv`, `layers_full.csv`, and `data_bundle.joblib` into `../original_nb_data/MICE_Output/my-eval/` (60/20/20 stratified split, `random_state=42` - same recipe as `eval-1k`). It does **not** touch `eval-1k/`.
 
 Then point `run_eval` at your bundle by overriding the `BUNDLE_DIR` parameter:
 
@@ -261,21 +261,7 @@ jupyter kernelspec list   # must be run with the venv activated
 You should see `mice-venv`. If not, re-run `./build_env.sh`. Make sure both run scripts pass `-k mice-venv`.
 
 **`Command 'jupyter' not found`.**
-You're outside the venv. Either `source .venv/bin/activate` first, or inspect the kernelspec on disk directly — no `jupyter` CLI required. The path differs by platform:
+You're outside the venv. Either `source .venv/bin/activate` first, or inspect the kernelspec on disk directly - no `jupyter` CLI required. The path differs by platform:
 - Linux: `~/.local/share/jupyter/kernels/mice-venv/kernel.json`
 - macOS: `~/Library/Jupyter/kernels/mice-venv/kernel.json`
 
-**`KeyError: 'HF_TOKEN'` or 401 on model download.**
-`.env` not being found. The run scripts `cd "$(dirname "$0")"` first, so `load_dotenv()` looks for `local_execute/.env`. Confirm the file exists there and has no quotes around the token value.
-
-**`401 Unauthorized` on `meta-llama/Meta-Llama-3-8B-Instruct`.**
-Your HF account hasn't accepted the Llama 3 license yet. Visit the model page on huggingface.co and click "Agree and access repository", then retry.
-
-**CUDA OOM during generation.**
-Either lower `MAX_NEW_TOKENS` in cell 3, or lower the `CHUNK_SIZE = 256` for BERTScore in cell 10, or run with a smaller model.
-
-**Test run starts at sample N instead of 0.**
-Stale `featextract_checkpoint.pkl`. Remove it (see Test runs section above).
-
-**Notebook hangs forever during the judge step.**
-Make sure you're running `run_judge.sh` and not the old interactive cell. The current pipeline reads from `judge_responses.json`, never from stdin.
