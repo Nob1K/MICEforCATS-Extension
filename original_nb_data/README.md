@@ -1,6 +1,6 @@
 # Original Notebooks and Data
 
-The original Colab notebooks and source datasets for the MICE-for-CATS extension project. Notebooks here import `google.colab` and read from Google Drive paths — **they are not directly runnable locally**. For the Colab-stripped, locally-executable versions of the core pipeline, see [`../local_execute/`](../local_execute/README.md).
+The original Colab notebooks and source datasets for the MICE-for-CATS extension project. Notebooks here import `google.colab` and read from Google Drive paths - **they are not directly runnable locally**. For the Colab-stripped, locally-executable versions of the core pipeline, see [`../local_execute/`](../local_execute/README.md).
 
 This folder is the source of truth for the experimental work and the data it operates on.
 
@@ -45,9 +45,9 @@ Each is stored as a Hugging Face `Dataset` directory (`data-*.arrow` + `dataset_
 
 | Directory | Source | Question type emphasis |
 |---|---|---|
-| `ambigQA_hf_1k/` | [AmbigQA](https://huggingface.co/datasets/ambig_qa) | Ambiguous questions - should prompt the model to **clarify**. |
-| `abstentionBench_hf_1k/` | [AbstentionBench](https://huggingface.co/datasets/AbstentionBench) | Unanswerable questions - should prompt the model to **abstain**. |
-| `triviaQA_hf_1k/` | [TriviaQA](https://huggingface.co/datasets/trivia_qa) | Well-formed factual questions - model should **answer**. |
+| `ambigQA_hf_1k/` | [AmbigQA](https://huggingface.co/datasets/sewon/ambig_qa) | Ambiguous questions - should prompt the model to **clarify**. |
+| `abstentionBench_hf_1k/` | [AbstentionBench](https://huggingface.co/datasets/facebook/AbstentionBench) | Unanswerable questions - should prompt the model to **abstain**. |
+| `triviaQA_hf_1k/` | [TriviaQA](https://huggingface.co/datasets/mandarjoshi/trivia_qa) | Well-formed factual questions - model should **answer**. |
 | `combined_datasets_hf/` | Union of the three above | All three response types in one dataset. |
 | `combined_datasets_lite_hf/` | Smaller curated subset of `combined_datasets_hf/` | Contains smaller questions for faster feature extraction. |
 
