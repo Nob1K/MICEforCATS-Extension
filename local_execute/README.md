@@ -12,7 +12,7 @@ Implementation in this folder adapts the notebooks originally designed to run on
       v  creates .venv, installs deps, registers `mice-venv` Jupyter kernel
       |
       |
- run_feat_extract.sh            (heavy - will take many hours on GPU)
+ run_feat_extract.sh            (heavy - will take hours on GPU)
       |
       v  papermill MICE-Replica_feat_extract.ipynb -> output_feat_extract.ipynb
          writes:
@@ -40,18 +40,18 @@ Implementation in this folder adapts the notebooks originally designed to run on
          reads results_summary_judged.csv + results_layers.csv
          writes ../original_nb_data/MICE_Output/<BUNDLE_DIR>/
                   summary_full.csv, layers_full.csv, data_bundle.joblib
-         (default BUNDLE_DIR = "my-eval"; eval-1k is reserved for the
+         (default BUNDLE_DIR = "my-eval"; eval-2.5k is reserved for the
           precomputed bundle and is never overwritten)
 
   -----  the steps above are OPTIONAL - skip it if you're
-         using our precomputed eval-1k bundle (the default for run_eval).  -----
+         using our precomputed eval-2.5k bundle (the default for run_eval).  -----
 
- run_eval.sh                    (CPU-only; seconds-to-minutes)
+ run_eval.sh                    (CPU-only; seconds)
       |
       v  papermill MICE-Evals.ipynb -> output_eval.ipynb
          reads ../original_nb_data/MICE_Output/<BUNDLE_DIR>/
                  layers_full.csv, summary_full.csv, data_bundle.joblib
-         (default BUNDLE_DIR = "eval-1k" - our precomputed bundle.
+         (default BUNDLE_DIR = "eval-2.5k" - our precomputed bundle.
           override with -p BUNDLE_DIR my-eval to use your own.)
          trains LR + RF, runs smECE / AUC / utility / MBR analyses
          renders all plots inline in output_eval.ipynb
@@ -106,7 +106,7 @@ Re-running `build_env.sh` is safe - venv creation is skipped if it exists, and `
 
 ## Running the pipeline
 
-**It is recommended that you use our already extracted features, as running feature extraction is very compute heavy and will take a lot of time. You can find our extracted feature in ../original_nb_data/MICE_Output/eval-1k. Use the data in that folder to train logistic regression and random forest, which will be in step 4 (skip 1-3).**
+**It is recommended that you use our already extracted features, as running feature extraction is very compute heavy and will take a lot of time. You can find our extracted feature in ../original_nb_data/MICE_Output/eval-2.5k. Use the data in that folder to train logistic regression and random forest, which will be in step 4 (skip 1-3).**
 
 ### 1. Feature extraction
 
@@ -174,7 +174,7 @@ If you ran steps 1–3 yourself and want to evaluate on those outputs instead of
 ./finalize_results.sh
 ```
 
-This writes `summary_full.csv`, `layers_full.csv`, and `data_bundle.joblib` into `../original_nb_data/MICE_Output/my-eval/` (60/20/20 stratified split, `random_state=42` - same recipe as `eval-1k`). It does **not** touch `eval-1k/`.
+This writes `summary_full.csv`, `layers_full.csv`, and `data_bundle.joblib` into `../original_nb_data/MICE_Output/my-eval/` (60/20/20 stratified split, `random_state=42` - same recipe as `eval-2.5k`). It does **not** touch `eval-2.5k/`.
 
 Then point `run_eval` at your bundle by overriding the `BUNDLE_DIR` parameter:
 
@@ -183,7 +183,7 @@ source .venv/bin/activate
 papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
 ```
 
-`run_eval.sh` continues to default to `eval-1k`, so anyone using the precomputed path is unaffected.
+`run_eval.sh` continues to default to `eval-2.5k`, so anyone using the precomputed path is unaffected.
 
 ### 4. Train Logistic Regression and Random Forest with extracted features, then run the evaluation pipeline (start at this step if you just want to see results and not extract your own features as training data)
 
@@ -191,7 +191,7 @@ papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
 ./run_eval.sh
 ```
 
-By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-1k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
+By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-2.5k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
 
 Graphs and outputs can be viewed at the output notebook saved to `output_eval.ipynb`.
 
@@ -232,8 +232,8 @@ rm -f ../original_nb_data/MICE_Output/featextract_checkpoint.pkl
 | `run_judge.ipynb` | Applies LLM-judge predictions to the summary CSV. Reads `judge_responses.json`. |
 | `run_judge.sh` | Runs `run_judge.ipynb` via papermill. Output: `output_judge.ipynb`. |
 | `judge_responses.json` | (You create this.) Concatenated JSON output from the external LLM judge. Flat array or list-of-batches both work. |
-| `MICE-Evals.ipynb` | Trains LR + RF on a featurized bundle, runs smECE / AUC / utility / MBR evaluation, plots results. CPU-only; no GPU or LLM required. Has a `parameters`-tagged cell exposing `BUNDLE_DIR` (default `"eval-1k"`). |
-| `run_eval.sh` | Runs `MICE-Evals.ipynb` via papermill against the default `BUNDLE_DIR=eval-1k`. Output: `output_eval.ipynb`. |
+| `MICE-Evals.ipynb` | Trains LR + RF on a featurized bundle, runs smECE / AUC / utility / MBR evaluation, plots results. CPU-only; no GPU or LLM required. Has a `parameters`-tagged cell exposing `BUNDLE_DIR` (default `"eval-2.5k"`). |
+| `run_eval.sh` | Runs `MICE-Evals.ipynb` via papermill against the default `BUNDLE_DIR=eval-2.5k`. Output: `output_eval.ipynb`. |
 | `finalize_results.ipynb` | Optional bridge: turns `results_summary_judged.csv` + `results_layers.csv` (from your local feat-extract + judge run) into the eval-canonical bundle (`summary_full.csv`, `layers_full.csv`, `data_bundle.joblib`). Has a `parameters`-tagged cell exposing `BUNDLE_DIR` (default `"my-eval"`). |
 | `finalize_results.sh` | Runs `finalize_results.ipynb` via papermill. Output: `output_finalize.ipynb`. |
 | `output_feat_extract.ipynb` | Generated by papermill. Contains executed cells, printed batch prompts, and the embedded layer-F1 plot. |
