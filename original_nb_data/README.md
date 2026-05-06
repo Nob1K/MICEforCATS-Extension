@@ -15,23 +15,23 @@ This folder is the source of truth for the experimental work and the data it ope
 | `MICE-Replica.ipynb` | MICE-for-CATS replication for feature extraction part. Loads Llama-3-8B-Instruct, generates a response per question, extracts intermediate-layer hidden states using logit lens, computes per-layer BERTScore F1 against the final-layer text, and saves `results_summary.csv` + `results_layers.csv`. Local equivalent: `MICE-Replica_feat_extract.ipynb`. |
 | `MICE-Replica-Brandon_sRun.ipynb` | Brandon's sample run of `MICE-Replica.ipynb` against `Data/dataset_Brandon.csv`. Outputs were combined with Trek's run to produce the precomputed `MICE_Output/eval-1k/` bundle. |
 | `MICE-Replica-Trek_sRun.ipynb` | Trek's sample run, against `Data/dataset_Trek.csv`. Companion to Brandon's run. |
-| `MICE-Replica-Justin_sRun.ipynb` | Justin's additional sample run, against `Data/dataset_Justin.csv`. The results are later on combined with Brandon and Trek's run, producing the eval-2.5k bundle |
+| `MICE-Replica-Justin_sRun.ipynb` | Justin's additional sample run, against `Data/dataset_Justin.csv`. Outputs are combined with Brandon's and Trek's runs in `results_finalizer.ipynb` to produce the precomputed `MICE_Output/eval-2.5k/` bundle. |
 | `MICE-Evals.ipynb` | Trains MICE Logistic Regression and Random Forest classifiers on the featurized eval bundle, then evaluates with smECE, ROC/PR-AUC, expected utility under three risk profiles, and per-type accuracy with empirical-MBR thresholds. Local equivalent: `local_execute/MICE-Evals.ipynb`. |
 | `MICE-Classifiers.ipynb` | Earlier classifier exploration - bridges raw feature-extraction output into classifier-ready form. Largely superseded by `MICE-Evals.ipynb`. |
 | `LogitLens.ipynb` | Standalone logit-lens implementation used to develop and validate the layer-extraction technique before it was integrated into `MICE-Replica.ipynb`. Useful as a reference for how the per-layer hidden-state decoding works. |
 | `BaselineModel-TS.ipynb` | Baseline accuracy experiments - runs Llama 3 on the question set without any MICE machinery (no logit lens, no calibration), to establish the floor that the MICE classifiers need to beat. Outputs land in `TS_Baseline_Output/`. |
 | `SubsetQuestionsToCSV.ipynb` | Utility: loads one of the Hugging Face dataset directories under `Data/` and dumps it to CSV. Used during dataset construction. |
-| `MICE_Output/results_finalizer.ipynb` | Concatenates per-runner CSVs (Brandon + Trek), pivots layer-wise BERTScores into wide form, builds a stratified train/val/test split, and saves the `data_bundle.joblib` consumed by `MICE-Evals.ipynb`. Local equivalent: `local_execute/finalize_results.ipynb`. |
+| `MICE_Output/results_finalizer.ipynb` | Concatenates per-runner CSVs (Brandon + Trek + Justin), pivots layer-wise BERTScores into wide form, builds a stratified train/val/test split, and saves the `data_bundle.joblib` consumed by `MICE-Evals.ipynb`. Local equivalent: `local_execute/finalize_results.ipynb`. |
 | `Data/download_data.ipynb` | Downloads the three source datasets (AmbigQA, AbstentionBench, TriviaQA), takes 1k from each, and writes them as Hugging Face Dataset directories under `Data/`. Run this once before anything else if rebuilding the dataset from scratch. |
 | `Data/misc/de-duplicater.ipynb` | Utility: Deduplicates our training data |
-| `DataSelector.ipynb` | Utility: Combines eval-1k data with additional 1500 samples run by Justin (500 additional from each dataset) to produce eval-2.5k |
+| `DataSelector.ipynb` | Utility: Selects 1500 additional questions (500 per type) from `combined_datasets_lite_hf/`, excluding any already in `eval-1k`, and writes them to `Data/dataset_Justin.csv` for Justin's feature-extraction run. The actual combination into the eval-2.5k bundle happens in `results_finalizer.ipynb`. |
 
 ### Folder layout
 
 | Path | Contents |
 |---|---|
 | `Data/` | Source datasets and the curated CSVs used by the pipeline notebooks. See section below. |
-| `MICE_Output/` | Outputs of pipeline runs. `eval-2.5k/` is the current finalized bundle (train/val/test split + featurized `data_bundle.joblib`) used by evaluation, which contains the previously used `eval-1k/` bundle. `results_finalizer.ipynb` lives here because it's the notebook that produces the bundle. |
+| `MICE_Output/` | Outputs of pipeline runs. `eval-2.5k/` is the current finalized bundle (train/val/test split + featurized `data_bundle.joblib`) used by evaluation; `eval-1k/` is the earlier Brandon+Trek bundle, retained alongside it. Per-runner raw outputs (`lite_results_*_trek.csv`, `results_*_brandon.csv`, `results_*_justin.csv`) also live here. `results_finalizer.ipynb` lives here because it's the notebook that produces the bundle. |
 | `TS_Baseline_Output/` | Outputs of `BaselineModel-TS.ipynb` - Llama-3 raw responses for the baseline comparison. |
 | `sync/` | Google Drive sync utilities (`pull.py`, `pull_all.py`, `update.sh`) for us to sync with this repo more conveniently. |
 
@@ -63,7 +63,7 @@ The three response targets (`abstain` / `clarify` / `answer`) form the three-way
 | `dataset_Trek.csv` | Trek's split (~500 rows). Input to `MICE-Replica-Trek_sRun.ipynb`. |
 | `dataset_Justin.csv` | Justin's split (~1500 rows). Input to `MICE-Replica-Justin_sRun.ipynb`. |
 
-Both CSVs share the schema: `question_id`, `question`, `answer`, `type` (one of `abstain` / `clarify` / `answer`).
+All three CSVs share the schema: `question_id`, `question`, `answer`, `type` (one of `abstain` / `clarify` / `answer`).
 
 ### Subdirectories
 
