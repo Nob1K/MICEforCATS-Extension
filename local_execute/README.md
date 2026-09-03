@@ -201,7 +201,7 @@ papermill MICE-Evals.ipynb output_eval.ipynb -k mice-venv -p BUNDLE_DIR my-eval
 ./run_eval.sh
 ```
 
-By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-2.5k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most accurate.
+By default this reads our precomputed bundle in `../original_nb_data/MICE_Output/eval-2.5k/` (`layers_full.csv`, `summary_full.csv`, `data_bundle.joblib`). Trains the logistic regression model and the random forest model on the bundle's train split, then runs the evaluation pipeline (smECE, AUC, utility, MBR analyses), focusing on RF because it was found to be the most calibrated.
 
 Graphs and outputs can be viewed at the output notebook saved to `output_eval.ipynb`.
 
