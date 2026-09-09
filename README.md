@@ -18,7 +18,7 @@ MICE features produce well-calibrated confidence estimates in the QA setting, wh
 
 That is an **18x reduction** in smooth expected calibration error over the raw baseline, on the 500-question held-out test split of the 2,500-question set.
 
-But well-calibrated confidence turned out not to be *sufficient*. MICE for CATs assumes the optimal action can be read off a threshold on a one-dimensional confidence axis. In the three-way setting that assumption breaks - the confidence distributions for `clarify` and `abstain` overlap almost completely:
+But well-calibrated confidence turned out to be *insufficient*. MICE for CATs assumes the optimal action can be decided using thresholds on a one-dimensional confidence axis. Our finding is that this is not true - the confidence distributions for `clarify` and `abstain` overlap almost completely:
 
 | Decision method | Test accuracy |
 |---|---|
@@ -51,7 +51,7 @@ The takeaway: the confidence *estimate* survives the move from tool-calling to q
    - *Empirical:* the same decision rule, but with the two thresholds grid-searched on the validation split under 0/1 loss.
    - *Direct:* a random forest trained on the same features with the action label as the target, skipping the confidence layer entirely.
 
-5. **Scoring.** An LLM judge (following the AbstentionBench protocol) classifies each Llama response as an answer, a clarification request, or an abstention.
+5. **Scoring.** An LLM judge classifies each Llama response as an answer, a clarification request, or an abstention.
 
 ## Running it
 
@@ -74,11 +74,11 @@ To regenerate features from scratch instead of using the precomputed bundle, you
 
 ## Limitations
 
-- **One model.** Everything is Llama-3-8B-Instruct. Whether MICE features calibrate this well on other architectures, other sizes, or instruction-tuned-vs-base variants is untested.
+- **Only one large language model used.** Everything is Llama-3-8B-Instruct. Whether MICE features calibrate this well on other architectures, other sizes, or instruction-tuned-vs-base variants is untested.
 - **The judge step is manual.** In `local_execute`, prompts are printed for you to paste into an external LLM and the responses are pasted back as JSON. It is not an API call, so it is not reproducible end-to-end without human involvement.
 - **Hand-chosen utility values.** The theoretical MBR thresholds depend on utility numbers we picked, not on anything estimated from data.
 - **The LLM judge is unvalidated.** Response classification is done by an external LLM rather than human annotation, and we did not measure judge–human agreement. Judge error could propagate into both the correctness labels used to train the confidence models and the accuracy numbers reported above.
-- **500-question test set.** Confidence intervals on the accuracy figures are wide: the 52.6% vs. 61.0% gap is meaningful, the 52.2% vs. 52.6% gap probably is not.
+- **500-question test set.** Confidence intervals on the accuracy figures are wide: the 52.6% vs. 61.0% gap is meaningful, the 52.2% vs. 52.6% gap is not as much.
 
 ## Contributions
 
